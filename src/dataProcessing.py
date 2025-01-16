@@ -6,18 +6,34 @@ import pandas as pd
 import generateReport
 load_dotenv()
 
-def main(start_date, end_date):
+def main(start_date, end_date, client_id):
+    if start_date > end_date:
+        print("La fecha de inicio no puede ser mayor a la fecha de fin.")
+        return
+    
     uri = os.getenv("MONGO_URI")
     client = MongoClient(uri)
     
     db = client["transacciones_db"]
+    
+    if not client_exists(db, client_id):
+        print(f"El cliente con ID {client_id} no existe en la base de datos.")
+        return
+    
     transactions = get_transactions(db, start_date, end_date)
     general = get_general_resume(transactions)
     save_to_json(general, "resumen_general.json")
     
     by_client = get_client_resume(transactions)
     save_to_json(by_client, "resumen_por_cliente.json")
-    return "Archivos 'resumen_general.json' y 'resumen_por_cliente.json' generados correctamente."
+    print("Archivos 'resumen_general.json' y 'resumen_por_cliente.json' generados correctamente.")
+    
+    
+    generateReport.main(client_id, start_date, end_date)
+
+
+def client_exists(db, client_id):
+    return db.transacciones.find_one({"cliente_id": client_id}) is not None
 
 
 def get_transactions(db, start_date, end_date):
@@ -117,9 +133,8 @@ def save_to_json(data, filename):
 
 
 
-start_date = datetime(2024, 1, 1)
+start_date = datetime(2025, 1, 1)
 end_date = datetime(2025, 1, 31)
 client_id = "123e4567-e89b-12d3-a456-426614174001"
 
-print(main(start_date, end_date))
-generateReport.main(client_id, start_date, end_date)
+main(start_date, end_date, client_id)
