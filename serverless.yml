@@ -1,0 +1,72 @@
+org: jisocorg
+app: automatizacionreportes
+service: AutomatizacionDeReportes
+
+provider:
+  name: aws
+  runtime: python3.8
+  environment:
+    MONGO_URI: mongodb+srv://admin_user:VIstqMBPS5Kvw1f2@clusterreportes.ix546.mongodb.net/?retryWrites=true&w=majority&appName=clusterReportes
+
+resources:
+  Resources:
+    S3Bucket:
+      Type: AWS::S3::Bucket
+      Properties:
+        BucketName: bucket-reportes-financieros2
+        AccessControl: Private
+
+functions:
+  # CRUD operations for the user
+  createTransaction:
+    handler: src/createTransaction.handler
+    events:
+      - httpApi:
+          path: /transaction
+          method: post
+  readTransaction:
+    handler: src/readTransaction.handler
+    events:
+      - httpApi:
+          path: /transactions
+          method: get
+  readUserTransactions:
+    handler: src/readUserTransactions.handler
+    events:
+      - httpApi:
+          path: /transactions/{cliente_id}
+          method: get
+  updateTransaction:
+    handler: src/updateTransaction.handler
+    events:
+      - httpApi:
+          path: /transaction/{transaccion_id}
+          method: put
+  deactivateTransaction:
+    handler: src/deactivateTransaction.handler
+    events:
+      - httpApi:
+          path: /transaction/{transaccion_id}
+          method: delete
+  
+  # Functions to generate reports
+  # dataProcessing:
+  #   handler: src/dataProcessing.handler
+  # generateReport:
+  #   handler: src/generateReport.handler
+  # uploadFile:
+  #   handler: src/uploadFile.handler
+
+plugins:
+  - serverless-python-requirements
+
+custom:
+  pythonRequirements:
+    slim: true
+    zip: true
+
+package:
+  exclude:
+    - node_modules/**
+    - .serverless/**
+    - .git/**
